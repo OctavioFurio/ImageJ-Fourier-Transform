@@ -68,7 +68,7 @@ public class K_Nearest implements PlugInFilter
                     int nx = input.getWidth(); 
                     int ny = input.getHeight();
                     ImageAccess output = new ImageAccess(nx, ny);
-                    output = ClassMeuExemplo.inverte(input);
+                    output = ClassInverteCor.inverte(input);
                     output.show("Imagem resultante");
                     // FIM DO CÓDIGO para inverter
                     // CODIGO PARA WAVELET:

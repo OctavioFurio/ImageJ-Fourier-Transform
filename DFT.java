@@ -15,20 +15,23 @@ public class DFT {
 	static private ImageAccess borderOf(ImageAccess input) {
 		int nx = input.getWidth();
 		int ny = input.getHeight();
-
 		double[][] matrix = new double[nx][ny];
 
-		double value = 0.0;
-
-		for (int x=0; x<nx; x++)
-			for (int y=0; y<ny; y++)
-				matrix[x][y] = input.getPixel(x, y);
+		for (int i = 0; i < nx * ny; i ++)
+		{
+			int x = i % nx;
+			int y = i / nx;
+			matrix[x][y] = input.getPixel(x, y);
+		}
 
 		matrix = detectBorder(matrix);
 
-		for (int x=0; x<nx; x++)
-			for (int y=0; y<ny; y++) 
-				input.putPixel(x, y, matrix[x][y]);
+		for (int i = 0; i < nx * ny; i ++)
+		{
+			int x = i % nx;
+			int y = i / nx;
+			input.putPixel(x, y, matrix[x][y]);
+		}
 
 		return input;
 	}
@@ -59,6 +62,45 @@ public class DFT {
 		}
                     
         return border;
+    }
+
+	static private ComplexNumber[] borderAsVector(ImageAccess input) {
+		int nx = input.getWidth();
+		int ny = input.getHeight();
+		double[][] matrix = new double[nx][ny];
+		ComplexNumber[] vec;
+
+		for (int i = 0; i < nx * ny; i ++)
+		{
+			int x = i % nx;
+			int y = i / nx;
+			matrix[x][y] = input.getPixel(x, y);
+		}
+
+		vec = borderAsVector(matrix);
+
+		return vec;
+	}
+
+	public static ComplexNumber[] borderAsVector(double[][] image) {
+		int width = image.length;
+        int height = image[0].length;
+        boolean[] visited = new boolean[width*height];
+		ComplexNumber[] vec = new ComplexNumber[0];
+		double val= 0;
+		int x, y, i = 0;
+
+		// Enquanto não achar um pixel de borda, varre a matriz
+		while(val != 255. && i < height * width) 
+		{
+			x = i % width;
+			y = i / width;
+			val = image[x][y]; 
+		}
+
+		/*TODO: IMPLEMENTAR A BUSCA EM BORDA E PASSAR O RESULTADO PARA VEC*/
+                    
+        return vec;
     }
 
 	private int getN(double[][] shape){

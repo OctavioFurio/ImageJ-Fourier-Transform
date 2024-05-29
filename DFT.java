@@ -34,20 +34,29 @@ public class DFT {
 	}
 
 	public static double[][] detectBorder(double[][] image) {
-        int height = image.length;
-        int width = image[0].length;
-        double[][] border = new double[height][width];
+		int width = image.length;
+        int height = image[0].length;
+        double[][] border = new double[width][height];
 
-        for (int x = 1; x < height - 1; x++)
-            for (int y = 1; y < width - 1; y++) 
-                if (image[x][y] == 0.) 
-                    if (image[x + 1][y + 0] == 255. || image[x - 1][y + 0] == 255. ||
-						image[x + 0][y + 1] == 255. || image[x + 0][y - 1] == 255. ||
-						image[x + 1][y + 1] == 255. || image[x - 1][y - 1] == 255. ||
-						image[x + 1][y - 1] == 255. || image[x - 1][y + 1] == 255.  )   
-						{
-							border[x][y] = 255.;
-						}
+		/* Percorre sequencialmente a imagem, da esquerda para a direita, 
+		* ignorando os pixels da borda da matriz.
+		*/
+		for(int i = 0; i < (height - 2) * (width - 2); i++)
+		{
+			int x = i % (width - 2) + 1;
+			int y = i / (width - 2) + 1;
+			double val = image[x][y]; // Valor do pixel atual 
+
+			/* Se existe ao menos 1 pixel preto no vizinho vertical ou horizontal
+			* o valor é multiplicado por 1, caso contrário, 0. */
+			val *= 1 - (
+				(image[x + 1][y]/255) *
+				(image[x - 1][y]/255) *
+				(image[x][y + 1]/255) *
+				(image[x][y - 1]/255));
+		
+			border[x][y] = val;
+		}
                     
         return border;
     }

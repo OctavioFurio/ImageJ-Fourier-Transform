@@ -12,95 +12,100 @@ public class DFT {
 		return input;
 	}
 
+	static private int[] imageToPixelVector(ImageAccess img) {
+		int nx = img.getWidth();
+		int ny = img.getHeight();
+		int[] vec = new int[nx* ny];
+
+		for (int i = 0; i < nx * ny; i ++)
+		{
+			int x = i % nx;
+			int y = i / nx;
+			vec[i] = (int)(img.getPixel(x, y))/255;
+		}
+
+		return vec;
+	}
+
+	static private ImageAccess pixelVectorToImage(int[] vec, int nx, int ny) {
+		ImageAccess img = new ImageAccess(nx, ny);
+
+		for (int i = 0; i < nx * ny; i ++)
+		{
+			int x = i % nx;
+			int y = i / nx;
+			img.putPixel(x, y, vec[i] * 255);
+		}
+
+		return img;
+	}
+
 	static private ImageAccess borderOf(ImageAccess input) {
 		int nx = input.getWidth();
 		int ny = input.getHeight();
-		double[][] matrix = new double[nx][ny];
+		int[] vec = imageToPixelVector(input);
 
-		for (int i = 0; i < nx * ny; i ++)
-		{
-			int x = i % nx;
-			int y = i / nx;
-			matrix[x][y] = input.getPixel(x, y);
-		}
-
-		matrix = detectBorder(matrix);
-
-		for (int i = 0; i < nx * ny; i ++)
-		{
-			int x = i % nx;
-			int y = i / nx;
-			input.putPixel(x, y, matrix[x][y]);
-		}
+		vec = detectBorder(vec, nx, ny);
+		input = pixelVectorToImage(vec, nx, ny);
 
 		return input;
 	}
 
-	public static double[][] detectBorder(double[][] image) {
-		int width = image.length;
-        int height = image[0].length;
-        double[][] border = new double[width][height];
+	public static int[] detectBorder(int[] vec, int nx, int ny) {
+        int[] border = new int[nx * ny];
 
 		/* Percorre sequencialmente a imagem, da esquerda para a direita, 
 		* ignorando os pixels da borda da matriz.
 		*/
-		for(int i = 0; i < (height - 2) * (width - 2); i++)
+		for(int i = 0; i < (nx - 2) * (ny - 2); i++)
 		{
-			int x = i % (width - 2) + 1;
-			int y = i / (width - 2) + 1;
-			double val = image[x][y]; // Valor do pixel atual 
+			int x = i % (nx - 2) + 1;
+			int y = i / (nx - 2) + 1;
+			int j = x + y * nx;
+			int val = vec[j]; // Valor do pixel atual 
 
 			/* Se existe ao menos 1 pixel preto no vizinho vertical ou horizontal
 			* o valor é multiplicado por 1, caso contrário, 0. */
 			val *= 1 - (
-				(image[x + 1][y]/255) *
-				(image[x - 1][y]/255) *
-				(image[x][y + 1]/255) *
-				(image[x][y - 1]/255));
+				vec[(x + 1) + y * nx] *
+				vec[(x - 1) + y * nx] *
+				vec[x + (y + 1) * nx] *
+				vec[x + (y - 1) * nx]);
 		
-			border[x][y] = val;
+			border[j] = val;
 		}
                     
         return border;
     }
 
-	static private ComplexNumber[] borderAsVector(ImageAccess input) {
-		int nx = input.getWidth();
-		int ny = input.getHeight();
-		double[][] matrix = new double[nx][ny];
-		ComplexNumber[] vec;
+	static private ComplexNumber[] borderVectorOf(ImageAccess img) {
+		int nx = img.getWidth();
+		int ny = img.getHeight();
+		int[] vec = imageToPixelVector(img);
+		ComplexNumber[] borderVec;
 
-		for (int i = 0; i < nx * ny; i ++)
-		{
-			int x = i % nx;
-			int y = i / nx;
-			matrix[x][y] = input.getPixel(x, y);
-		}
+		vec = detectBorder(vec, nx, ny);
+		img = pixelVectorToImage(vec, nx, ny);
+		borderVec = detectBorderVector(vec, nx, ny);
 
-		vec = borderAsVector(matrix);
-
-		return vec;
+		return borderVec;
 	}
 
-	public static ComplexNumber[] borderAsVector(double[][] image) {
-		int width = image.length;
-        int height = image[0].length;
-        boolean[] visited = new boolean[width*height];
-		ComplexNumber[] vec = new ComplexNumber[0];
+	public static ComplexNumber[] detectBorderVector(int[] vec, int nx, int ny) {
+        boolean[] visited = new boolean[nx * ny];
+		ComplexNumber[] borderVec = new ComplexNumber[0];
 		double val= 0;
-		int x, y, i = 0;
+		int i = 0;
 
 		// Enquanto não achar um pixel de borda, varre a matriz
-		while(val != 255. && i < height * width) 
+		while(val != 255. && i < nx * ny) 
 		{
-			x = i % width;
-			y = i / width;
-			val = image[x][y]; 
+			val = vec[i]; 
 		}
 
 		/*TODO: IMPLEMENTAR A BUSCA EM BORDA E PASSAR O RESULTADO PARA VEC*/
                     
-        return vec;
+        return borderVec;
     }
 
 	private int getN(double[][] shape){

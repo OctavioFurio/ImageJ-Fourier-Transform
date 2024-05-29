@@ -1,7 +1,7 @@
 public class ComplexNumber {
-    double real, image;
+    int real, image;
  
-    public ComplexNumber(double r, double i)
+    public ComplexNumber(int r, int i)
     {
         this.real = r;
         this.image = i;

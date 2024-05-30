@@ -71,7 +71,7 @@ public class Discrete_Fourier_Transform implements PlugInFilter
                     output = DFT.applyDTF(input, 10);
 
                     // Output, nesse caso, pode ser sobrescrita por seu mapa de frequências
-                    if (i == 4) output.show("Imagem resultante"); // Exibir apenas a primeira do diretório
+                    if (i == 10 || i == 4) output.show("Imagem resultante"); // Exibir apenas uma imagem do diretório
                     
                     // if (salvarResultados)
                         // ; // TODO: Salvar imagens resultantes da DFT

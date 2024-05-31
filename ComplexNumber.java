@@ -1,20 +1,32 @@
-public class ComplexNumber {
-    int real, image;
+public class ComplexNumber 
+{
+    double real, image, modulo;
  
-    public ComplexNumber(int r, int i)
+    public ComplexNumber(double real, double imaginary)
     {
-        this.real = r;
-        this.image = i;
+        this.real = real;
+        image     = imaginary;
+        modulo    = Math.sqrt((real * real) + (image * image));
     }
 
-    public static ComplexNumber add(ComplexNumber n1, ComplexNumber n2)
+    public ComplexNumber add(ComplexNumber other)
     {
-        ComplexNumber res;
-        
-        res = new ComplexNumber(0, 0);
-        res.real = n1.real + n2.real;
-        res.image = n1.image + n2.image;
-        
-        return res;
+        return new ComplexNumber(
+            this.real  + other.real, 
+            this.image + other.image
+        );
+    }
+
+    public ComplexNumber multiply(ComplexNumber other) 
+    {
+        double newReal = this.real * other.real - this.image * other.image;
+        double newImaginary = this.real * other.image + this.image * other.real;
+        return new ComplexNumber(newReal, newImaginary);
+    }
+
+    @Override
+    public String toString() 
+    {
+        return this.real + " + " + this.image + "i";
     }
 }

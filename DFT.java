@@ -8,7 +8,8 @@ public class DFT {
 
     public DFT() {}
     
-	public static ImageAccess applyDTF(ImageAccess img, int M) {
+	public static ImageAccess applyDTF(ImageAccess img, int M) 
+	{
 		ComplexNumber[] borderSeq;
 		int nx, ny;
 
@@ -18,10 +19,40 @@ public class DFT {
 		img = addPaddingTo(img);
 		img = borderOf(img);
 		borderSeq = borderSequenceOf(img);
+		// double[] output = applyDFT(borderSeq, M);
+		// return output;
+		
 		img = borderSequenceToImage(borderSeq, nx, ny);
 
 		return img;
 	}
+
+    private static double[] applyDFT(ComplexNumber[] border, int M) 
+	{
+        int N = border.length;
+        assert N >= M : "Erro: M muito grande.";
+
+        double[] coefs = new double[M];
+        for (int pos = 0; pos < M; pos++) 
+		{
+            ComplexNumber sum = new ComplexNumber(0, 0);
+        
+			for (int i = 0; i < N; i++) 
+			{
+                double angle = -2 * Math.PI * pos * i / N;
+
+				// Aplicando a fórmula de Euler
+                ComplexNumber exp = new ComplexNumber(Math.cos(angle), Math.sin(angle));
+                sum = sum.add(border[i].multiply(exp));
+            }
+
+			ComplexNumber res = new ComplexNumber(sum.real / N, sum.image / N);
+
+            coefs[pos] = res.modulo;
+        }
+
+        return coefs;
+    }
 
 	/* addPaddingTo: Adiciona uma borda extra à imagem. 
 	 */
@@ -127,7 +158,8 @@ public class DFT {
 				pixelVec[(x + 1) + (y + 0) * nx] *
 				pixelVec[(x + 0) + (y + 1) * nx] *
 				pixelVec[(x - 1) + (y + 0) * nx] *
-				pixelVec[(x + 0) + (y - 1) * nx]);
+				pixelVec[(x + 0) + (y - 1) * nx]
+			);
 		
 			borderVec[j] = val;
 		}
@@ -148,17 +180,18 @@ public class DFT {
 		return borderSeq;
 	}
 
-	private static ComplexNumber[] borderSequenceOf(int[] pixelVec, int nx, int ny) {
+	private static ComplexNumber[] borderSequenceOf(int[] pixelVec, int nx, int ny) 
+	{
         int i, val;
 		ComplexNumber[] borderSeq;
 		boolean[] visited;
 
 		// Enquanto não achar um pixel de borda, varre o vetor
 		i = -1;
-		do{
+		do {
 			i++;
 			val = pixelVec[i];
-		}while(val != 1 && i < nx * ny - 1);
+		} while(val != 1 && i < nx * ny - 1);
 
 		visited = new boolean[nx * ny];
 		borderSeq = longestBorderSequence(i, pixelVec, nx, ny, visited);
@@ -166,14 +199,18 @@ public class DFT {
         return borderSeq;
     }
 
-	static <T> T[] concatArray(T[] array1, T[] array2) {
+	static <T> T[] concatArray(T[] array1, T[] array2) 
+	{
 		T[] res;
 		res = Arrays.copyOf(array1, array1.length + array2.length);
 		System.arraycopy(array2, 0, res, array1.length, array2.length);
 		return res;
 	}
 
-	private static ComplexNumber[] longestBorderSequence(int current, int[] pixelVec, int nx, int ny, boolean[] visited) {
+	private static ComplexNumber[] longestBorderSequence(
+		int current, int[] pixelVec, int nx, int ny, boolean[] visited
+	) 
+	{
 		int x, y;
 		int[] dir;
 		ComplexNumber[] borderSeq, logestChildSeq, tempSeq;
@@ -213,7 +250,8 @@ public class DFT {
         return borderSeq;
     }
 
-	private static ImageAccess borderSequenceToImage(ComplexNumber[] borderSeq, int nx, int ny) {
+	private static ImageAccess borderSequenceToImage(ComplexNumber[] borderSeq, int nx, int ny) 
+	{
 		ImageAccess img;
 
 		img = new ImageAccess(nx, ny);
@@ -226,14 +264,4 @@ public class DFT {
 
 		return img;
 	}
-
-	// private int getN(double[][] shape){
-	// 	int N = 0;
-
-	// 	for(double[] x : shape)
-	// 		for(double y : x)
-	// 			N += (int) y;
-
-	// 	return N;
-	// }
 }

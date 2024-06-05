@@ -24,6 +24,14 @@ public class ComplexNumber
         return new ComplexNumber(newReal, newImaginary);
     }
 
+    public ComplexNumber multiply(double other) 
+    {
+        return new ComplexNumber(
+            this.real * other, 
+            this.image * other
+        );
+    }
+
     @Override
     public String toString() 
     {

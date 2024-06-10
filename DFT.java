@@ -28,16 +28,15 @@ public class DFT {
 	{
 		int N;
 		double[] coefs;
+		ComplexNumber sum;
 
 		N = borderSeq.length;
-		assert N >= M : "Erro: M muito grande.";
+		if(N < M) M = N;
 
 		coefs = new double[M];
 		
 		for (int u = 0; u < M; u++) 
 		{
-			ComplexNumber sum;
-
 			sum = new ComplexNumber(0,0);
 
 			for(int k = 0; k < N; k++)
@@ -189,89 +188,67 @@ public class DFT {
 
 	/* <RESUMO>: Retorna uma sequência de números complexos que representam a fronteira
 	* da imagem.
-	* <TODO>: Implementar de fato a varredura sequêncial da borda. Atualmente, ele apenas
-	* varre a imagem.
 	*/
 	private static ComplexNumber[] borderSequenceOf(int[] pixelVec, int nx, int ny) 
 	{
-		ComplexNumber[] borderSeq, tempSeq;
-		borderSeq = new ComplexNumber[0];
-
-		for(int i = 0; i < nx * ny; i++)
-		{
-			int x, y;
-
-			x = i % nx;
-			y = i / nx;
-
-			if(pixelVec[i] == 1)
-			{
-				tempSeq = new ComplexNumber[1];
-				tempSeq[0] = new ComplexNumber(x, y);
-				borderSeq = concatArray(borderSeq,tempSeq);
-			}
-		}
-
-        // int i, val;
-		// ComplexNumber[] borderSeq;
-		// boolean[] visited;
+        int i, val;
+		ComplexNumber[] borderSeq;
+		boolean[] visited;
 
 		// Enquanto não achar um pixel de borda, varre o vetor
-		// i = -1;
-		// do {
-		// 	i++;
-		// 	val = pixelVec[i];
-		// } while(val != 1 && i < nx * ny - 1);
+		i = 0;
+		do {
+			val = pixelVec[i];
+			i++;
+		} while(val != 1 && i < nx * ny);
 
-		// visited = new boolean[nx * ny];
-		// borderSeq = longestBorderSequence(i, pixelVec, nx, ny, visited);
+		visited = new boolean[nx * ny];
+		borderSeq = longestBorderSequence(i, pixelVec, nx, ny, visited);
                     
         return borderSeq;
     }
 
-	
-	// private static ComplexNumber[] longestBorderSequence(
-	// 	int current, int[] pixelVec, int nx, int ny, boolean[] visited
-	// ) 
-	// {
-	// 	int x, y;
-	// 	int[] dir;
-	// 	ComplexNumber[] borderSeq, logestChildSeq, tempSeq;
+	/* <RESUMO>: Busca recursivamente a maior sequência de borda possível. */
+	private static ComplexNumber[] longestBorderSequence(
+		int current, int[] pixelVec, int nx, int ny, boolean[] visited
+	) 
+	{
+		int x, y;
+		int[] dir;
+		ComplexNumber[] borderSeq, logestChildSeq, tempSeq;
 
-	// 	if(pixelVec[current] == 0 || visited[current])
-	// 		return new ComplexNumber[0];
+		if(pixelVec[current] == 0 || visited[current])
+			return new ComplexNumber[0];
 
-	// 	visited[current] = true;
+		visited[current] = true;
 
-	// 	x = current % nx;
-	// 	y = current / nx;
+		x = current % nx;
+		y = current / nx;
 
-	// 	dir = new int[8];
-	// 	dir[0] = (x + 1) + (y + 0) * nx; // Leste
-	// 	dir[1] = (x + 1) + (y + 1) * nx; // Nordeste
-	// 	dir[2] = (x + 0) + (y + 1) * nx; // Norte
-	// 	dir[3] = (x - 1) + (y + 1) * nx; // Noroeste
-	// 	dir[4] = (x - 1) + (y + 0) * nx; // Oeste
-	// 	dir[5] = (x - 1) + (y - 1) * nx; // Sudoeste
-	// 	dir[6] = (x + 0) + (y - 1) * nx; // Sul
-	// 	dir[7] = (x + 1) + (y - 1) * nx; // Sudeste
+		dir = new int[8];
+		dir[0] = (x + 1) + (y + 0) * nx; // Leste
+		dir[1] = (x + 1) + (y + 1) * nx; // Nordeste
+		dir[2] = (x + 0) + (y + 1) * nx; // Norte
+		dir[3] = (x - 1) + (y + 1) * nx; // Noroeste
+		dir[4] = (x - 1) + (y + 0) * nx; // Oeste
+		dir[5] = (x - 1) + (y - 1) * nx; // Sudoeste
+		dir[6] = (x + 0) + (y - 1) * nx; // Sul
+		dir[7] = (x + 1) + (y - 1) * nx; // Sudeste
 
-	// 	logestChildSeq = longestBorderSequence(dir[0], pixelVec, nx, ny, visited);
-	// 	for(int d = 1; d < 8; d++)
-	// 	{
-	// 		tempSeq = longestBorderSequence(dir[d], pixelVec, nx, ny, visited);
-	// 		if(tempSeq.length > logestChildSeq.length)
-	// 			logestChildSeq = Arrays.copyOf(tempSeq, tempSeq.length);
-	// 	}
+		logestChildSeq = longestBorderSequence(dir[0], pixelVec, nx, ny, visited);
+		for(int d = 1; d < 8; d++)
+		{
+			tempSeq = longestBorderSequence(dir[d], pixelVec, nx, ny, visited);
+			if(tempSeq.length > logestChildSeq.length)
+				logestChildSeq = Arrays.copyOf(tempSeq, tempSeq.length);
+		}
 
-	// 	borderSeq = new ComplexNumber[1];
-	// 	borderSeq[0] = new ComplexNumber(x, y);
-	// 	borderSeq = concatArray(borderSeq,logestChildSeq);
-
-	// 	visited[current] = false;
+		borderSeq = new ComplexNumber[1];
+		borderSeq[0] = new ComplexNumber(x, y);
+		borderSeq = concatArray(borderSeq,logestChildSeq);
                     
-    //     return borderSeq;
-    // }
+        return borderSeq;
+    }
 
 	/* <RESUMO>: Concatena dois arrays. */
 	static <T> T[] concatArray(T[] array1, T[] array2) 

@@ -12,7 +12,7 @@ import java.util.Comparator;
 public class Discrete_Fourier_Transform implements PlugInFilter 
 {
     ImagePlus reference;    // Imagem de referência
-    int M;                       
+    int M, K;                       
 
     public int setup(String arg, ImagePlus imp) 
     {
@@ -25,13 +25,14 @@ public class Discrete_Fourier_Transform implements PlugInFilter
     public void run(ImageProcessor img) 
     {
         GenericDialog gd = new GenericDialog("Transformada discreta de Fourier (DFT)", IJ.getInstance());
-        gd.addNumericField("Quantia de fatores a serem registrados: ", 5, 0); // Substituir por quantos fatores de DFT salvar
-
+        
+        gd.addNumericField("Quantia de fatores a serem registrados: ", 100, 0); // Substituir por quantos fatores de DFT salvar
+        gd.addNumericField("Valor de K: ", 5, 0);
         gd.showDialog();
         if (gd.wasCanceled())
             return;
-
         M = (int) gd.getNextNumber();
+        K = (int) gd.getNextNumber();
 
         SaveDialog sd = new SaveDialog("Selecione seu diretório.", "Selecione algum arquivo no diretório.", "");
         if (sd.getFileName() == null) 
@@ -88,7 +89,7 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         int pos = 0;
         for(double[] imagem : distances)
         {
-            if(pos > 5)     break;
+            if(pos > K)     break;
             if(pos == 0)    base[(int) imagem[0]].show("Imagem original");
             else            base[(int) imagem[0]].show("Imagem semelhante nro. " + pos);
             pos++;

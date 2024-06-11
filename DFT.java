@@ -16,6 +16,10 @@ public class DFT {
 		img = addPaddingTo(img,1);
 		img = borderOf(img);
 		bordedSeq = borderSequenceOf(img);
+
+		// img.show("Borda");
+		// borderSequenceToImage(bordedSeq, img.getWidth(), img.getHeight()).show("Sequência Complexa");
+
 		output = calculateDFT(bordedSeq, M);
 
 		return output;
@@ -31,7 +35,8 @@ public class DFT {
 		ComplexNumber sum;
 
 		N = borderSeq.length;
-		if(N < M) M = N;
+
+		assert N >= M : "Erro: M muito grande.";
 
 		coefs = new double[M];
 		
@@ -196,10 +201,10 @@ public class DFT {
 		boolean[] visited;
 
 		// Enquanto não achar um pixel de borda, varre o vetor
-		i = 0;
+		i = -1;
 		do {
-			val = pixelVec[i];
 			i++;
+			val = pixelVec[i];
 		} while(val != 1 && i < nx * ny);
 
 		visited = new boolean[nx * ny];
@@ -257,5 +262,22 @@ public class DFT {
 		res = Arrays.copyOf(array1, array1.length + array2.length);
 		System.arraycopy(array2, 0, res, array1.length, array2.length);
 		return res;
+	}
+
+	/* <RESUMO>: Transforma uma sequência de números complexos para uma imagem.
+	 * Este método é apenas utilizada para testes.
+	 */
+	private static ImageAccess borderSequenceToImage(ComplexNumber[] borderSeq, int nx, int ny) {
+		ImageAccess img;
+
+		img = new ImageAccess(nx, ny);
+
+		for (int i = 0; i < borderSeq.length; i++)
+		{
+			ComplexNumber s = borderSeq[i];
+			img.putPixel((int)s.real, (int)s.image,  255.);
+		}
+
+		return img;
 	}
 }

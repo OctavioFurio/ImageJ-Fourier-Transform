@@ -42,7 +42,7 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         if (gd.wasCanceled())
             return;
         M = (int) gd.getNextNumber();
-        int choice = (int) gd.getNextNumber();
+        double choice = (double) gd.getNextNumber();
 
         // Solicita o diretório das imagens
         sd = new SaveDialog("Selecione seu diretório.", "Selecione seu diretório.", "");
@@ -168,25 +168,28 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         return featureVector;
     }
     
-    public static double[][] distance(double[][] features, int id, int c) 
+    public static double[][] distance(double[][] features, int id, double c) 
     {
         double[][] distances = new double[features.length][2];
 
-        for (int i = 0; i < features.length; i++) {
-            double[] image = features[i];
+        double[] referenceFeature = features[id];
+        double[] normalizedReferenceFeature = normalizeFeatureVector(referenceFeature);
 
-            // Salvamos o identificador junto com as distâncias
+        for (int i = 0; i < features.length; i++) 
+        {
+            double[] imageFeature = features[i];
+            double[] normalizedImageFeature = normalizeFeatureVector(imageFeature);
+
             distances[i][0] = i;
-            distances[i][1] = eDistance(image, features[id], c);
+            distances[i][1] = eDistance(normalizedImageFeature, normalizedReferenceFeature, c);
         }
 
-        // Ordenamos a matriz baseado na distância
+        // Sort by distance
         Arrays.sort(distances, Comparator.comparingDouble(row -> row[1]));
-
         return distances; // O primeiro item sempre será a própria imagem. Podemos usar isso.
     }
 
-    private static double eDistance(double[] ref, double[] other, int c) 
+    private static double eDistance(double[] ref, double[] other, double c) 
     {
         assert ref.length == other.length : "Erro: Base de dados inconsistente.";
 
@@ -196,19 +199,46 @@ public class Discrete_Fourier_Transform implements PlugInFilter
 
             // Começando de 1 para ignorar o identificador.
             for (int index = 1; index < ref.length; index++) 
-                sum += Math.pow(ref[index] - other[index], c);
+                sum += Math.pow(Math.abs(ref[index] - other[index]), c);
             
-            return Math.pow(sum, 1/c);
+            return Math.pow(sum, 1./c);
         }
 
         double max = 0;
 
         // Começando de 1 para ignorar o identificador.
-        for (int index = 1; index < ref.length; index++) 
-            if((ref[index] - other[index]) > max)
-                max = Math.abs(ref[index] - other[index]);
+        for (int index = 1; index < ref.length; index++) {
+            double diff = Math.abs(ref[index] - other[index]);
+            if(diff > max)
+                max = diff;
+        }
 
         return max;
+    }
+
+    private static double[] normalizeFeatureVector(double[] featureVector) 
+    {
+        double[] normalized = new double[featureVector.length];
+        double mean = 0;
+        double variance = 0;
+
+        for (int i = 1; i < featureVector.length; i++) 
+            mean += featureVector[i];
+
+        mean /= (featureVector.length - 1);
+
+        for (int i = 1; i < featureVector.length; i++) 
+            variance += Math.pow(featureVector[i] - mean, 2);
+
+        variance /= (featureVector.length - 2);
+
+        double stdDev = Math.sqrt(variance);
+
+        normalized[0] = featureVector[0]; // Preserve the identifier
+        for (int i = 1; i < featureVector.length; i++) 
+            normalized[i] = (featureVector[i] - mean) / stdDev;
+
+        return normalized;
     }
 
     private static void saveThe(double[][] output, String fileName) 

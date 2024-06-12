@@ -17,15 +17,24 @@ public class DFT {
 		img = borderOf(img);
 		bordedSeq = borderSequenceOf(img);
 
-		output = calculateDFT(bordedSeq, M);
+		try 
+		{
+			output = calculateDFT(bordedSeq, M);	
+			return output;
+		} 
+		
+		catch (AssertionError e) 
+		{
+			System.exit(0);
+		}
 
-		return output;
+		return new double[]{-1.,};
 	}
 
 	/* <RESUMO>: Calcula o descritor de Fourier a partir da sequência
 	 * de números complexos da fronteira.
 	 */
-	private static double[] calculateDFT(ComplexNumber[] borderSeq, int M) 
+	private static double[] calculateDFT(ComplexNumber[] borderSeq, int M) throws AssertionError
 	{
 		int N;
 		double[] coefs;
@@ -33,7 +42,7 @@ public class DFT {
 
 		N = borderSeq.length;
 
-		assert N >= M : "Erro: M muito grande.";
+		assert (N <= M) : "Erro: M muito grande.";
 
 		coefs = new double[M];
 		

@@ -36,10 +36,13 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         // Solicita o valor de M
         gd = new GenericDialog("Transformada discreta de Fourier (DFT)", IJ.getInstance());
         gd.addNumericField("Quantia M de fatores a serem registrados: ", 100, 0);
+        gd.addNumericField("Utilizar a distância L (0 = Infinity):", 2, 2);
+
         gd.showDialog();
         if (gd.wasCanceled())
             return;
         M = (int) gd.getNextNumber();
+        int choice = (int) gd.getNextNumber();
 
         // Solicita o diretório das imagens
         sd = new SaveDialog("Selecione seu diretório.", "Selecione seu diretório.", "");
@@ -60,7 +63,7 @@ public class Discrete_Fourier_Transform implements PlugInFilter
             return;
         k = (int) gd.getNextNumber();
 
-        distances = distance(features, id); // Calcula as distâncias até a imagem de referência
+        distances = distance(features, id, choice); // Calcula as distâncias até a imagem de referência
         
         // Mostra as k primeiras imagens
         for(int i = 0; i < distances.length; i++)
@@ -165,7 +168,7 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         return featureVector;
     }
     
-    public static double[][] distance(double[][] features, int id) 
+    public static double[][] distance(double[][] features, int id, int c) 
     {
         double[][] distances = new double[features.length][2];
 
@@ -174,7 +177,7 @@ public class Discrete_Fourier_Transform implements PlugInFilter
 
             // Salvamos o identificador junto com as distâncias
             distances[i][0] = i;
-            distances[i][1] = eDistance(image, features[id]);
+            distances[i][1] = eDistance(image, features[id], c);
         }
 
         // Ordenamos a matriz baseado na distância
@@ -183,18 +186,29 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         return distances; // O primeiro item sempre será a própria imagem. Podemos usar isso.
     }
 
-    private static double eDistance(double[] ref, double[] other) 
+    private static double eDistance(double[] ref, double[] other, int c) 
     {
         assert ref.length == other.length : "Erro: Base de dados inconsistente.";
 
-        double sum = 0;
+        if (c > 0)
+        {
+            double sum = 0;
 
-        // Começando de 1 para ignorar o identificador.
-        for (int index = 1; index < ref.length; index++) {
-            sum += Math.pow(ref[index] - other[index], 2);
+            // Começando de 1 para ignorar o identificador.
+            for (int index = 1; index < ref.length; index++) 
+                sum += Math.pow(ref[index] - other[index], c);
+            
+            return Math.pow(sum, 1/c);
         }
 
-        return Math.sqrt(sum);
+        double max = 0;
+
+        // Começando de 1 para ignorar o identificador.
+        for (int index = 1; index < ref.length; index++) 
+            if((ref[index] - other[index]) > max)
+                max = Math.abs(ref[index] - other[index]);
+
+        return max;
     }
 
     private static void saveThe(double[][] output, String fileName) 

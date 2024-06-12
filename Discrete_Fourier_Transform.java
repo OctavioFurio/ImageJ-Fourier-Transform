@@ -12,7 +12,9 @@ import java.util.Comparator;
 public class Discrete_Fourier_Transform implements PlugInFilter 
 {
     ImagePlus reference;    // Imagem de referência
-    int M, K;                       
+    int M;                  // Quantia dos M primeiros coeficientes
+    int k;                  // Número de vizinhos mais próximos    
+    int id = 0;             // Indice da imagem de referência; 
 
     public int setup(String arg, ImagePlus imp) 
     {
@@ -24,82 +26,129 @@ public class Discrete_Fourier_Transform implements PlugInFilter
 
     public void run(ImageProcessor img) 
     {
-        GenericDialog gd = new GenericDialog("Transformada discreta de Fourier (DFT)", IJ.getInstance());
+        GenericDialog gd;
+        SaveDialog sd;
+        String dir;
+        ImageAccess[] base;
+        double[][] features;
+        double[][] distances;
         
-        gd.addNumericField("Quantia de fatores a serem registrados: ", 100, 0); // Substituir por quantos fatores de DFT salvar
-        gd.addNumericField("Valor de K: ", 5, 0);
+        // Solicita o valor de M
+        gd = new GenericDialog("Transformada discreta de Fourier (DFT)", IJ.getInstance());
+        gd.addNumericField("Quantia M de fatores a serem registrados: ", 100, 0);
         gd.showDialog();
         if (gd.wasCanceled())
             return;
         M = (int) gd.getNextNumber();
-        K = (int) gd.getNextNumber();
 
-        SaveDialog sd = new SaveDialog("Selecione seu diretório.", "Selecione algum arquivo no diretório.", "");
+        // Solicita o diretório das imagens
+        sd = new SaveDialog("Selecione seu diretório.", "Selecione seu diretório.", "");
         if (sd.getFileName() == null) 
             return;
+        dir = sd.getDirectory();
 
-        String dir = sd.getDirectory();
-        String ref = sd.getFileName();
+        base = varrerDiretorio(dir);        // Retorna as imagens do diretório
+        if(base == null)
+            return;
+        features = getFeatures(base);       // Retorna os vetores de características
 
-        varrerDiretorio(ref, dir, M);
+        // Solicita o valor de k
+        gd = new GenericDialog("Transformada discreta de Fourier (DFT)", IJ.getInstance());
+        gd.addNumericField("Quantia k de vizinhos a serem buscados: ", 5, 0);
+        gd.showDialog();
+        if (gd.wasCanceled())
+            return;
+        k = (int) gd.getNextNumber();
+
+        distances = distance(features, id); // Calcula as distâncias até a imagem de referência
+        
+        // Mostra as k primeiras imagens
+        for(int i = 0; i < distances.length; i++)
+        {
+            double[] image = distances[i];
+
+            if(i > k)     break;
+            if(i == 0)    base[(int) image[0]].show("Imagem original");
+            else          base[(int) image[0]].show("Imagem semelhante nro. " + i);
+        }  
     }
 
-    public void varrerDiretorio(String ref, String dir, int M) 
+    public double[][] getFeatures(ImageAccess[] base) 
     {
+        double[][] features;
+        
+        IJ.log("");
+        IJ.log("Aplicando DFT...");
+
+        features = new double[base.length][1 + M]; // Guardará os M valores extraídos de N imagens, + um identificador
+
+        for (int i = 0; i < base.length; i++) {
+            double[] output;
+            ImageAccess img;
+
+            img = base[i];
+
+            IJ.showStatus(i+"/"+base.length);               // mostra na interface
+            IJ.showProgress((double)i / base.length);       // barra de progresso 
+            IJ.log("Analisando imagem " + (i + 1) + "...");
+
+            output = DFT.applyDTF(img, M);
+            features[i] = createFeatureVector(i, output); // identificador está sendo do tipo double para facilitar. Deverá ser o String: list[i].
+        }
+
+        saveThe(features, "features.csv");
+
+        IJ.log("");
+        IJ.showProgress(1.0);
+        IJ.showStatus("");
+        
+        return features; 
+    }
+
+    public ImageAccess[] varrerDiretorio(String dir) 
+    {
+        String[] list;
+        ImageAccess[] base;
+        
         IJ.log("");
         IJ.log("Vasculhando imagens...");
         
         if (!dir.endsWith(File.separator)) dir += File.separator;
         
-        String[] list = new File(dir).list();  /* lista de arquivos */
-        if (list==null) return;
+        list = new File(dir).list(); // lista de arquivos
+        if (list==null) return null;
 
-        double[][] features = new double[list.length][1 + M]; // Guardará os M valores extraídos de N imagens, + um identificador
-        ImageAccess[] base = new ImageAccess[list.length];
-        double[] output = new double[M];
-        int id = 0;
+        base = new ImageAccess[list.length];
+        id = 0;
 
         for (int i = 0; i < list.length; i++) {
+            File f;
+            ImagePlus image;
+            ImageAccess input;
+            int nx, ny;
+
             IJ.showStatus(i+"/"+list.length+": "+list[i]);  // mostra na interface
             IJ.showProgress((double)i / list.length);       // barra de progresso 
-            File f = new File(dir+list[i]);
             
+            f = new File(dir+list[i]);    
             if (f.isDirectory()) continue;
             
-            ImagePlus image = new Opener().openImage(dir, list[i]); // abre a imagem
-            
+            image = new Opener().openImage(dir, list[i]); // abre a imagem
             if (image == null) continue;        
+            if (image.getTitle().equals(reference.getTitle())) id = i;
 
-            ImageAccess input = new ImageAccess(image.getProcessor());
-            int nx = input.getWidth(); 
-            int ny = input.getHeight();
-
-            IJ.log("Analisando " + f.getName() + "...");
-
-            if (f.getName().equals(ref)) id = i;
+            input = new ImageAccess(image.getProcessor());
+            nx = input.getWidth(); 
+            ny = input.getHeight();
 
             base[i] = input;
-            output = DFT.applyDTF(input, M);
-
-            features[i] = createFeatureVector(i, output); // identificador está sendo do tipo double para facilitar. Deverá ser o String: list[i].
         }
-
-        double[][] distances = distance(id, features); // id é o identificador da imagem de referência
-        
-        int pos = 0;
-        for(double[] imagem : distances)
-        {
-            if(pos > K)     break;
-            if(pos == 0)    base[(int) imagem[0]].show("Imagem original");
-            else            base[(int) imagem[0]].show("Imagem semelhante nro. " + pos);
-            pos++;
-        }
- 
-        saveThe(features, "features.csv");
 
         IJ.log("");
         IJ.showProgress(1.0);
-        IJ.showStatus("");      
+        IJ.showStatus("");
+        
+        return base; 
     }    
     
     private static double[] createFeatureVector(int i, double[] output) 
@@ -116,7 +165,7 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         return featureVector;
     }
     
-    public static double[][] distance(int ref, double[][] features) 
+    public static double[][] distance(double[][] features, int id) 
     {
         double[][] distances = new double[features.length][2];
 
@@ -125,7 +174,7 @@ public class Discrete_Fourier_Transform implements PlugInFilter
 
             // Salvamos o identificador junto com as distâncias
             distances[i][0] = i;
-            distances[i][1] = eDistance(image, features[ref]);
+            distances[i][1] = eDistance(image, features[id]);
         }
 
         // Ordenamos a matriz baseado na distância

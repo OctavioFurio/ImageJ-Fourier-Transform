@@ -17,9 +17,6 @@ public class DFT {
 		img = borderOf(img);
 		bordedSeq = borderSequenceOf(img);
 
-		// img.show("Borda");
-		// borderSequenceToImage(bordedSeq, img.getWidth(), img.getHeight()).show("Sequência Complexa");
-
 		output = calculateDFT(bordedSeq, M);
 
 		return output;
@@ -275,7 +272,7 @@ public class DFT {
 		for (int i = 0; i < borderSeq.length; i++)
 		{
 			ComplexNumber s = borderSeq[i];
-			img.putPixel((int)s.real, (int)s.image,  255.);
+			img.putPixel((int)s.real, (int)s.image, i);
 		}
 
 		return img;

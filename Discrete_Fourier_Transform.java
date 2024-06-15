@@ -60,15 +60,35 @@ public class Discrete_Fourier_Transform implements PlugInFilter
 
         distances = distance(features, id, choice); // Calcula as distâncias até a imagem de referência
         
+        double precision = 0;
+        double recall = 0;
+        String originalClass = "";
+        String currentClass = "";
         // Mostra as k primeiras imagens
         for(int i = 0; i < distances.length; i++)
         {
             double[] image = distances[i];
 
             if(i > k)     break;
-            if(i == 0)    base[(int) image[0]].show("Imagem original");
-            else          base[(int) image[0]].show("Imagem semelhante nro. " + i);
-        }  
+            if(i == 0)    
+            {
+                base[(int) image[0]].show("Imagem original");
+                originalClass = imageNames[(int) image[0]].replaceAll("[^a-z]","");
+            }
+            else
+            {
+                base[(int) image[0]].show("Imagem semelhante nro. " + i);
+                currentClass = imageNames[(int) image[0]].replaceAll("[^a-z]","");
+                if(originalClass.equals(currentClass))
+                {
+                    precision += 1;
+                    recall += 1;
+                }
+            }
+        }
+        precision = precision/k;
+        recall = recall/9;
+        IJ.log("Precisao: " + precision + ", Revocacao: " + recall);
     }
 
     public double[][] getFeatures(ImageAccess[] base) 
@@ -237,5 +257,10 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         {
             e.printStackTrace();
         }
+    }
+
+    private void accuracy()
+    {
+
     }
 }

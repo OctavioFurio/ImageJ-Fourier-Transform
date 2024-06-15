@@ -37,6 +37,8 @@ public class DFT {
 	private static double[] calculateDFT(ComplexNumber[] borderSeq, int M) throws AssertionError
 	{
 		int N;
+		double oneOverN;
+		double angleConst;
 		double[] coefs;
 		ComplexNumber sum;
 
@@ -45,6 +47,8 @@ public class DFT {
 		assert (N <= M) : "Erro: M muito grande.";
 
 		coefs = new double[M];
+		oneOverN = 1.0/N;
+		angleConst = -2.0 * Math.PI / N;
 		
 		for (int u = 0; u < M; u++) 
 		{
@@ -52,14 +56,14 @@ public class DFT {
 
 			for(int k = 0; k < N; k++)
 			{
-				double angle = -2.0 * Math.PI * u * k / N;
+				double angle = angleConst * u * k;
 				ComplexNumber exp = new ComplexNumber(Math.cos(angle), Math.sin(angle));
-
-				sum = sum.add(borderSeq[k].multiply(exp));
+				
+				sum.add(ComplexNumber.multiply(borderSeq[k],exp));
 			}
 
-			sum = sum.multiply(1.0/N);
-			coefs[u] = sum.modulo;
+			sum.multiply(oneOverN);
+			coefs[u] = sum.modulo();
 		}
 
 		return coefs;

@@ -1,35 +1,45 @@
 public class ComplexNumber 
 {
-    double real, image, modulo;
+    double real, image;
  
     public ComplexNumber(double real, double imaginary)
     {
         this.real = real;
-        image     = imaginary;
-        modulo    = Math.sqrt((real * real) + (image * image));
+        this.image = imaginary;
     }
 
-    public ComplexNumber add(ComplexNumber other)
+    public double modulo()
     {
-        return new ComplexNumber(
-            this.real  + other.real, 
-            this.image + other.image
-        );
+        return Math.sqrt((real * real) + (image * image));
     }
 
-    public ComplexNumber multiply(ComplexNumber other) 
+    public void add(ComplexNumber other)
     {
-        double newReal = this.real * other.real - this.image * other.image;
-        double newImaginary = this.real * other.image + this.image * other.real;
+        real += other.real;
+        image += other.image;
+    }
+
+    public static ComplexNumber multiply(ComplexNumber first, ComplexNumber second) 
+    {
+        double newReal = first.real * second.real - first.image * second.image;
+        double newImaginary = first.real * second.image + first.image * second.real;
+
         return new ComplexNumber(newReal, newImaginary);
     }
 
-    public ComplexNumber multiply(double other) 
+    public void multiply(ComplexNumber other) 
     {
-        return new ComplexNumber(
-            this.real * other, 
-            this.image * other
-        );
+        double newReal = this.real * other.real - this.image * other.image;
+        double newImaginary = this.real * other.image + this.image * other.real;
+
+        real = newReal;
+        image = newImaginary;
+    }
+
+    public void multiply(double other) 
+    {
+        real *= other;
+        image *= other;
     }
 
     @Override

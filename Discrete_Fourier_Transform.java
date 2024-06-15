@@ -14,7 +14,8 @@ public class Discrete_Fourier_Transform implements PlugInFilter
     ImagePlus reference;    // Imagem de referência
     int M;                  // Quantia dos M primeiros coeficientes
     int k;                  // Número de vizinhos mais próximos    
-    int id = 0;             // Indice da imagem de referência; 
+    int id = 0;             // Indice da imagem de referência
+    String[] imageNames;    // Imagens do diretório
 
     public int setup(String arg, ImagePlus imp) 
     {
@@ -30,38 +31,32 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         SaveDialog sd;
         String dir;
         ImageAccess[] base;
+        double choice;
         double[][] features;
         double[][] distances;
         
-        // Solicita o valor de M
+        // Interface para definição de parâmetros
         gd = new GenericDialog("Transformada discreta de Fourier (DFT)", IJ.getInstance());
         gd.addNumericField("Quantia M de fatores a serem registrados: ", 100, 0);
-        gd.addNumericField("Utilizar a distância L (0 = Infinity):", 2, 2);
-
+        gd.addNumericField("Quantia k de vizinhos a serem buscados: ", 5, 0);
+        gd.addNumericField("Utilizar a distancia L (0 = Infinity):", 2, 2);
         gd.showDialog();
-        if (gd.wasCanceled())
-            return;
+        if (gd.wasCanceled()) return;
+
         M = (int) gd.getNextNumber();
-        double choice = (double) gd.getNextNumber();
+        k = (int) gd.getNextNumber();
+        choice = (double) gd.getNextNumber();
 
         // Solicita o diretório das imagens
         sd = new SaveDialog("Selecione seu diretório.", "Selecione seu diretório.", "");
-        if (sd.getFileName() == null) 
-            return;
+        if (sd.getFileName() == null) return;
         dir = sd.getDirectory();
 
-        base = varrerDiretorio(dir);        // Retorna as imagens do diretório
-        if(base == null)
-            return;
-        features = getFeatures(base);       // Retorna os vetores de características
+        base = varrerDiretorio(dir); // Retorna as imagens do diretório
+        if(base == null) return;
+        features = getFeatures(base);            // Retorna os vetores de características
 
-        // Solicita o valor de k
-        gd = new GenericDialog("Transformada discreta de Fourier (DFT)", IJ.getInstance());
-        gd.addNumericField("Quantia k de vizinhos a serem buscados: ", 5, 0);
-        gd.showDialog();
-        if (gd.wasCanceled())
-            return;
-        k = (int) gd.getNextNumber();
+        saveThe(features, "features.csv");
 
         distances = distance(features, id, choice); // Calcula as distâncias até a imagem de referência
         
@@ -83,10 +78,9 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         IJ.log("");
         IJ.log("Aplicando DFT...");
 
-        features = new double[base.length][1 + M]; // Guardará os M valores extraídos de N imagens, + um identificador
+        features = new double[base.length][M]; // Guardará os M valores extraídos de N imagens
 
         for (int i = 0; i < base.length; i++) {
-            double[] output;
             ImageAccess img;
 
             img = base[i];
@@ -95,11 +89,8 @@ public class Discrete_Fourier_Transform implements PlugInFilter
             IJ.showProgress((double)i / base.length);       // barra de progresso 
             IJ.log("Analisando imagem " + (i + 1) + "...");
 
-            output = DFT.applyDTF(img, M);
-            features[i] = createFeatureVector(i, output); // identificador está sendo do tipo double para facilitar. Deverá ser o String: list[i].
+            features[i] = DFT.applyDTF(img, M); // identificador está sendo do tipo double para facilitar. Deverá ser o String: list[i].
         }
-
-        saveThe(features, "features.csv");
 
         IJ.log("");
         IJ.showProgress(1.0);
@@ -110,7 +101,6 @@ public class Discrete_Fourier_Transform implements PlugInFilter
 
     public ImageAccess[] varrerDiretorio(String dir) 
     {
-        String[] list;
         ImageAccess[] base;
         
         IJ.log("");
@@ -118,25 +108,25 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         
         if (!dir.endsWith(File.separator)) dir += File.separator;
         
-        list = new File(dir).list(); // lista de arquivos
-        if (list==null) return null;
+        imageNames = new File(dir).list(); // lista de arquivos
+        if (imageNames==null) return null;
 
-        base = new ImageAccess[list.length];
+        base = new ImageAccess[imageNames.length];
         id = 0;
 
-        for (int i = 0; i < list.length; i++) {
+        for (int i = 0; i < imageNames.length; i++) {
             File f;
             ImagePlus image;
             ImageAccess input;
             int nx, ny;
 
-            IJ.showStatus(i+"/"+list.length+": "+list[i]);  // mostra na interface
-            IJ.showProgress((double)i / list.length);       // barra de progresso 
+            IJ.showStatus(i + "/" + imageNames.length + ": " + imageNames[i]);  // mostra na interface
+            IJ.showProgress((double)i / imageNames.length);       // barra de progresso 
             
-            f = new File(dir+list[i]);    
+            f = new File(dir + imageNames[i]);    
             if (f.isDirectory()) continue;
             
-            image = new Opener().openImage(dir, list[i]); // abre a imagem
+            image = new Opener().openImage(dir, imageNames[i]); // abre a imagem
             if (image == null) continue;        
             if (image.getTitle().equals(reference.getTitle())) id = i;
 
@@ -154,21 +144,7 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         return base; 
     }    
     
-    private static double[] createFeatureVector(int i, double[] output) 
-    {
-        double[] featureVector = new double[output.length + 1];
-        featureVector[0] = (double) i; // Idenficador da imagem
-
-        System.arraycopy(
-            output, 0,           // de...
-            featureVector, 1,   // para...
-            output.length               // no tamanho...
-        );
-
-        return featureVector;
-    }
-    
-    public static double[][] distance(double[][] features, int id, double c) 
+    public double[][] distance(double[][] features, int id, double c) 
     {
         double[][] distances = new double[features.length][2];
 
@@ -189,7 +165,7 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         return distances; // O primeiro item sempre será a própria imagem. Podemos usar isso.
     }
 
-    private static double eDistance(double[] ref, double[] other, double c) 
+    private double eDistance(double[] ref, double[] other, double c) 
     {
         assert ref.length == other.length : "Erro: Base de dados inconsistente.";
 
@@ -216,7 +192,7 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         return max;
     }
 
-    private static double[] normalizeFeatureVector(double[] featureVector) 
+    private double[] normalizeFeatureVector(double[] featureVector) 
     {
         double[] normalized = new double[featureVector.length];
         double mean = 0;
@@ -241,11 +217,14 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         return normalized;
     }
 
-    private static void saveThe(double[][] output, String fileName) 
+    private void saveThe(double[][] output, String fileName) 
     {
         try (PrintWriter writer = new PrintWriter(new FileWriter(fileName))) 
         {
-            for (double[] row : output) {
+            for (int j = 0; j < output.length; j++) {
+                double[] row = output[j];
+
+                writer.print(imageNames[j] + ",");
                 for (int i = 0; i < row.length; i++) {
                     writer.print(row[i]);
                     if (i < row.length - 1) writer.print(",");

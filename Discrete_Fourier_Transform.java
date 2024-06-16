@@ -65,19 +65,16 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         String originalClass = "";
         String currentClass = "";
         // Mostra as k primeiras imagens
-        for(int i = 0; i < distances.length; i++)
+        for(int i = 1; i < distances.length; i++)
         {
             double[] image = distances[i];
 
             if(i > k)     break;
-            if(i == 0)    
-            {
-                base[(int) image[0]].show("Imagem original");
-                originalClass = imageNames[(int) image[0]].replaceAll("[^a-z]","");
-            }
+
             else
             {
                 base[(int) image[0]].show("Imagem semelhante nro. " + i);
+                IJ.log(imageNames[(int) image[0]] + " -> Imagem semelhante nro. " + i + " (Distancia = " + image[1] + "u)");
                 currentClass = imageNames[(int) image[0]].replaceAll("[^a-z]","");
                 if(originalClass.equals(currentClass))
                 {

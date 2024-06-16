@@ -16,6 +16,7 @@ public class Discrete_Fourier_Transform implements PlugInFilter
     int k;                  // Número de vizinhos mais próximos    
     int id = 0;             // Indice da imagem de referência
     String[] imageNames;    // Imagens do diretório
+    boolean showImages;     // Exibir ou não as imagens escolhidas
 
     public int setup(String arg, ImagePlus imp) 
     {
@@ -39,13 +40,18 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         gd = new GenericDialog("Transformada discreta de Fourier (DFT)", IJ.getInstance());
         gd.addNumericField("Quantia M de fatores a serem registrados: ", 100, 0);
         gd.addNumericField("Quantia k de vizinhos a serem buscados: ", 5, 0);
-        gd.addNumericField("Utilizar a distancia L (0 = Infinity):", 2, 2);
+        gd.addChoice("Funcao de distancia: ", new String[] { "Manhattan ", "Euclidiana", "Chebyshev"}, "Euclidiana");
+        gd.addCheckbox("Exibir os K vizinhos escolhidos", false);
         gd.showDialog();
         if (gd.wasCanceled()) return;
 
         M = (int) gd.getNextNumber();
         k = (int) gd.getNextNumber();
-        choice = (double) gd.getNextNumber();
+        String fdist = gd.getNextChoice();
+
+        showImages = gd.getNextBoolean();
+        choice = fdist.equals("Manhattan")  ? (double) 1 :
+                 fdist.equals("Euclidiana") ? (double) 2 : (double) 0;
 
         // Solicita o diretório das imagens
         sd = new SaveDialog("Selecione seu diretório.", "Selecione seu diretório.", "");
@@ -62,29 +68,29 @@ public class Discrete_Fourier_Transform implements PlugInFilter
         
         double precision = 0;
         double recall = 0;
-        String originalClass = "";
+        String originalClass = imageNames[(int) distances[0][0]].replaceAll("[^a-z]","");;
         String currentClass = "";
+
+        IJ.log("Utilizando a funcao de distancia " + fdist);
+        IJ.log(">> " + imageNames[(int) distances[0][0]] + " [Imagem de referencia]");
+        IJ.log("");
         // Mostra as k primeiras imagens
         for(int i = 1; i < distances.length; i++)
         {
             double[] image = distances[i];
 
-            if(i > k)     break;
+            if(i > k)       break;
+            if(showImages)  base[(int) image[0]].show("Imagem semelhante nro. " + i);
+            
+            IJ.log(imageNames[(int) image[0]] + " -> Escolha nro. " + i + " (Distancia = " + image[1] + "u)");
 
-            else
-            {
-                base[(int) image[0]].show("Imagem semelhante nro. " + i);
-                IJ.log(imageNames[(int) image[0]] + " -> Imagem semelhante nro. " + i + " (Distancia = " + image[1] + "u)");
-                currentClass = imageNames[(int) image[0]].replaceAll("[^a-z]","");
-                if(originalClass.equals(currentClass))
-                {
-                    precision += 1;
-                    recall += 1;
-                }
-            }
+            currentClass = imageNames[(int) image[0]].replaceAll("[^a-z]","");
+            if(originalClass.equals(currentClass)) { precision += 1; recall += 1; }
         }
-        precision = precision/k;
-        recall = recall/9;
+        precision = precision / k;
+        recall = recall / 9.;
+
+        IJ.log("");
         IJ.log("Precisao: " + precision + ", Revocacao: " + recall);
     }
 

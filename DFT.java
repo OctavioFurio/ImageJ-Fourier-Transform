@@ -40,6 +40,7 @@ public class DFT {
 		double oneOverN;
 		double angleConst;
 		double[] coefs;
+		
 		ComplexNumber sum;
 
 		N = borderSeq.length;
@@ -47,23 +48,26 @@ public class DFT {
 		assert (N <= M) : "Erro: M muito grande.";
 
 		coefs = new double[M];
-		oneOverN = 1.0/N;
+		oneOverN = 1.0 / N;
 		angleConst = -2.0 * Math.PI / N;
 		
-		for (int u = 0; u < M; u++) 
+		for (int k = 0; k < M; k++) 
 		{
 			sum = new ComplexNumber(0,0);
 
-			for(int k = 0; k < N; k++)
+			for(int n = 0; n < N; n++)
 			{
-				double angle = angleConst * u * k;
-				ComplexNumber exp = new ComplexNumber(Math.cos(angle), Math.sin(angle));
+				double angle = angleConst * k * n;
 				
-				sum.add(ComplexNumber.multiply(borderSeq[k],exp));
+				ComplexNumber exp = new ComplexNumber(
+					Math.cos(angle), Math.sin(angle)
+				);
+				
+				sum.add(ComplexNumber.multiply(borderSeq[n], exp));
 			}
 
 			sum.multiply(oneOverN);
-			coefs[u] = sum.modulo();
+			coefs[k] = sum.modulo();
 		}
 
 		return coefs;

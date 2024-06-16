@@ -72,37 +72,34 @@ public class Discrete_Fourier_Transform implements PlugInFilter
             return; 
         }
         
-        double precision = 0;
-        double recall = 0;
         String originalClass = imageNames[id].replaceAll("[^a-z]","");;
         String currentClass = "";
 
         IJ.log("Utilizando a funcao de distancia " + fdist);
         IJ.log(">> " + imageNames[(int) distances[0][0]] + " [Imagem de referencia]");
         IJ.log("");
+
+        int total = new File(dir).list().length;
+        double acc = 0;
+
         // Mostra as k primeiras imagens
-        for(int i = 1; i <= k; i++)
+        for(int i = 1; i <= k && i < total; i++)
         {
-            double[] image;
-            int imageId;
-            int imageDist;
+            double[] image = distances[i];
+            int imageId = (int) image[0];
+            double imageDist = image[1];
 
-            image = distances[i];
-            imageId = (int) image[0];
-            imageDist = (int )image[1];
-
-            if(showImages)  base[imageId].show("Imagem semelhante nro. " + i);
+            if(showImages) base[imageId].show("Imagem semelhante nro. " + i);
             
-            IJ.log(imageNames[imageId] + " -> Escolha nro. " + i + " (Distancia = " + imageDist + "u)");
+            IJ.log("-> Escolha nro. " + i + " (Distancia = " + String.format("%.3f", imageDist) + "u): " + imageNames[imageId]);
 
             currentClass = imageNames[imageId].replaceAll("[^a-z]","");
-            if(originalClass.equals(currentClass)) { precision += 1; recall += 1; }
+
+            if(originalClass.equals(currentClass)) acc += 1. / k;
         }
-        precision = precision / k;
-        recall = recall / 9.;
 
         IJ.log("");
-        IJ.log("Precisao: " + precision + ", Revocacao: " + recall);
+        IJ.log("Pre amostral = " + String.format("%.3f", acc));
     }
 
     public ImageAccess[] varrerDiretorio(String dir) throws Exception
@@ -196,7 +193,6 @@ public class Discrete_Fourier_Transform implements PlugInFilter
             catch(Exception e){ throw e; }
         }
 
-        // Sort by distance
         Arrays.sort(distances, Comparator.comparingDouble(row -> row[1]));
         return distances; // O primeiro item sempre será a própria imagem.
     }

@@ -8,7 +8,7 @@ public class DFT {
 
 	public DFT() {}
 	
-	public static double[] applyDTF(ImageAccess img, int M) 
+	public static double[] applyDTF(ImageAccess img, int M) throws Exception
 	{	
 		double[] output;
 		ComplexNumber[] bordedSeq;
@@ -17,24 +17,16 @@ public class DFT {
 		img = borderOf(img);
 		bordedSeq = borderSequenceOf(img);
 
-		try 
-		{
-			output = calculateDFT(bordedSeq, M);	
+		try {
+			output = calculateDFT(bordedSeq, M);
 			return output;
-		} 
-		
-		catch (AssertionError e) 
-		{
-			System.exit(0);
-		}
-
-		return new double[]{-1.,};
+		} catch (Exception e) { throw e; }
 	}
 
 	/* <RESUMO>: Calcula o descritor de Fourier a partir da sequência
 	 * de números complexos da fronteira.
 	 */
-	private static double[] calculateDFT(ComplexNumber[] borderSeq, int M) throws AssertionError
+	private static double[] calculateDFT(ComplexNumber[] borderSeq, int M) throws Exception
 	{
 		int N;
 		double oneOverN;
@@ -45,7 +37,7 @@ public class DFT {
 
 		N = borderSeq.length;
 
-		assert (N <= M) : "Erro: M muito grande.";
+		if(N < M) throw new Exception("Erro: M muito grande.");
 
 		coefs = new double[M];
 		oneOverN = 1.0 / N;
